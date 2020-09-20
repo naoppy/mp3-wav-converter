@@ -30,17 +30,17 @@ def convert(src, dst):
         filename = os.path.abspath(filename)
         relative = os.path.relpath(filename, src)
         outpath = os.path.splitext(os.path.join(dst, relative))[0] + '.mp3'
+        os.makedirs(os.path.dirname(outpath), exist_ok=True)
         # print(filename)
         # print(relative)
         # print(outpath)
         input = ffmpeg.input(filename)
         out = ffmpeg.output(input, outpath,
-                            vn=True,
                             # ac='2',
                             # ar='44100',
-                            ab='128k',
+                            audio_bitrate='128k',
                             acodec='libmp3lame',
-                            f='mp3'),
+                            f='mp3')
         ffmpeg.run(out)
 
 
