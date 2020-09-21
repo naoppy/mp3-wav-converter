@@ -1,8 +1,7 @@
 import argparse
 import glob
 import os
-
-import ffmpeg
+import subprocess
 
 parser = argparse.ArgumentParser(description='指定したフォルダから再帰的にたどり、wavファイルをmp3ファイルに変換する')
 parser.add_argument(
@@ -23,25 +22,25 @@ parser.add_argument(
 
 
 # 参考：https://qiita.com/suzutsuki0220/items/43c87488b4684d3d15f6
+# https://trac.ffmpeg.org/ticket/8510
+#
 # ffmpeg -i "input.wav" -vn -ac 2 -ar 44100 -ab 256k -acodec libmp3lame -f mp3 "output.mp3"
+# ffmpeg -i input.wav -f ffmetadata - | iconv -f sjis -t utf8 | ffmpeg -i input.wav -i - -map_metadata 1 -b:a 256k -c:a libmp3lame sample.mp3
 def convert(src, dst):
     ilist = glob.glob(src + '/**/*.wav', recursive=True)
     for filename in ilist:
         filename = os.path.abspath(filename)
         relative = os.path.relpath(filename, src)
         outpath = os.path.splitext(os.path.join(dst, relative))[0] + '.mp3'
-        os.makedirs(os.path.dirname(outpath), exist_ok=True)
         # print(filename)
         # print(relative)
         # print(outpath)
-        input = ffmpeg.input(filename)
-        out = ffmpeg.output(input, outpath,
-                            # ac='2',
-                            # ar='44100',
-                            audio_bitrate='128k',
-                            acodec='libmp3lame',
-                            f='mp3')
-        ffmpeg.run(out)
+
+        os.makedirs(os.path.dirname(outpath), exist_ok=True)
+        command = f'ffmpeg -i "{filename}" -f ffmetadata - | iconv -f sjis -t utf-8 | ffmpeg -i "{filename}" -i - ' \
+                  f'-map_metadata 1 -b:a 256k -c:a libmp3lame "{outpath}"'
+        # print(command + '\n')
+        subprocess.call(command, shell=True)
 
 
 if __name__ == '__main__':
@@ -53,11 +52,7 @@ if __name__ == '__main__':
         print("broken src path")
         exit(1)
 
-    if dst is not None:
-        if not os.path.exists(dst):
-            print("broken dst path")
-            exit(1)
-    else:
+    if dst is None:
         dst = os.getcwd()
 
     src = os.path.abspath(src)
