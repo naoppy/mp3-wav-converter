@@ -13,7 +13,7 @@ these are available in both windows and linux.
 
 # Example
 ```python3
-python3 main.py "D:/CD" "D:/MP3CD"
+python3 main.py "D:/CD" -d "D:/MP3CD"
 ```
 
 # TODO
