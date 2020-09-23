@@ -17,7 +17,17 @@ parser.add_argument(
     nargs='?',
     metavar='path_to_out',
     type=str,
-    help='output folder, both relative path and absolute path are OK.',
+    help='output folder, both relative path and absolute path are OK.'
+         ' default is current directory.',
+)
+
+parser.add_argument(
+    '--encoding',
+    default='UTF-8',
+    metavar='encoding',
+    type=str,
+    help='encoding name of metadata. just type `iconv -l` to see available name list.'
+         ' default is UTF-8.'
 )
 
 
@@ -25,8 +35,8 @@ parser.add_argument(
 # https://trac.ffmpeg.org/ticket/8510
 #
 # ffmpeg -i "input.wav" -vn -ac 2 -ar 44100 -ab 256k -acodec libmp3lame -f mp3 "output.mp3"
-# ffmpeg -i input.wav -f ffmetadata - | iconv -f sjis -t utf8 | ffmpeg -i input.wav -i - -map_metadata 1 -b:a 256k -c:a libmp3lame sample.mp3
-def convert(src, dst):
+# ffmpeg -i `input.wav` -f ffmetadata - | iconv -f `encoding` -t utf8 | ffmpeg -i `input.wav` -i - -map_metadata 1 -b:a 256k -c:a libmp3lame sample.mp3
+def convert(src, dst, encoding):
     ilist = glob.glob(src + '/**/*.wav', recursive=True)
     for filename in ilist:
         filename = os.path.abspath(filename)
@@ -37,7 +47,7 @@ def convert(src, dst):
         # print(outpath)
 
         os.makedirs(os.path.dirname(outpath), exist_ok=True)
-        command = f'ffmpeg -i "{filename}" -f ffmetadata - | iconv -f sjis -t utf-8 | ffmpeg -i "{filename}" -i - ' \
+        command = f'ffmpeg -i "{filename}" -f ffmetadata - | iconv -f {encoding} -t UTF-8 | ffmpeg -i "{filename}" -i - ' \
                   f'-map_metadata 1 -b:a 256k -c:a libmp3lame "{outpath}"'
         # print(command + '\n')
         subprocess.call(command, shell=True)
@@ -47,6 +57,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     src = args.src
     dst = args.d
+    encoding = args.encoding
 
     if not os.path.exists(src):
         print("broken src path")
@@ -59,4 +70,4 @@ if __name__ == '__main__':
     dst = os.path.abspath(dst)
     print('src dir :' + src)
     print('dst dir :' + dst)
-    convert(src, dst)
+    convert(src, dst, encoding)
